@@ -25,9 +25,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.ObjectOutputStream;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 
 /**
  * This represents a street segment.
@@ -107,6 +105,11 @@ public class StreetEdge extends Edge implements Cloneable {
 
     /** The angle at the start of the edge geometry. Internal representation like that of inAngle. */
     private byte outAngle;
+
+    /**
+     * A set of bike networks where this edge is located inside their service regions.
+     */
+    private Set<String> bikeNetworks;
 
     public StreetEdge(StreetVertex v1, StreetVertex v2, LineString geometry,
                       I18NString name, double length,
@@ -878,5 +881,23 @@ public class StreetEdge extends Edge implements Cloneable {
             return ((SplitterVertex) tov).nextNodeId;
         else
             return -1;
+    }
+
+    public boolean addBikeNetwork(String bikeNetwork) {
+        if (bikeNetworks == null) {
+            synchronized (this) {
+                if (bikeNetworks == null) {
+                    bikeNetworks = new HashSet<>();
+                }
+            }
+        }
+        return bikeNetworks.add(bikeNetwork);
+    }
+
+    public boolean containsBikeNetwork(String bikeNetwork) {
+        if (bikeNetworks == null){
+            return false;
+        }
+        return bikeNetworks.contains(bikeNetwork);
     }
 }

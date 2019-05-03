@@ -36,6 +36,13 @@ public class BikeRentalStation implements Serializable, Cloneable {
     public boolean allowDropoff = true;
     @XmlAttribute
     @JsonSerialize
+    public boolean allowPickup = true;
+
+    /**
+     * isFloatingBike determines if a bike is dockless or not.
+     */
+    @XmlAttribute
+    @JsonSerialize
     public boolean isFloatingBike = false;
     @XmlAttribute
     @JsonSerialize

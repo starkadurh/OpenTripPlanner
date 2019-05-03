@@ -193,24 +193,31 @@ public class RoutingRequest implements Cloneable, Serializable {
     public int bikeSwitchCost;
 
     /** Time to rent a bike */
-    public int bikeRentalPickupTime = 60;
+    // SH Change
+    public int bikeRentalPickupTime = 20;
 
     /**
      * Cost of renting a bike. The cost is a bit more than actual time to model the associated cost and trouble.
      */
-    public int bikeRentalPickupCost = 120;
+    // SH Change
+    public int bikeRentalPickupCost = 10;
 
     /** Time to drop-off a rented bike */
-    public int bikeRentalDropoffTime = 30;
+    // SH Change
+    public int bikeRentalDropoffTime = 10;
 
     /** Cost of dropping-off a rented bike */
-    public int bikeRentalDropoffCost = 30;
+    // SH Change
+    public int bikeRentalDropoffCost = 10;
 
     /** Time to park a bike */
     public int bikeParkTime = 60;
 
     /** Cost of parking a bike. */
     public int bikeParkCost = 120;
+
+    /** Only use these bike networks. If null, use all of them. If empty, ignore all bike networks.*/
+    public HashSet<String> bikeNetworks;
 
     /**
      * Time to park a car in a park and ride, w/o taking into account driving and walking cost
@@ -231,10 +238,14 @@ public class RoutingRequest implements Cloneable, Serializable {
      */
     public double waitReluctance = 1.0;
 
-    /** How much less bad is waiting at the beginning of the trip (replaces waitReluctance on the first boarding) */
+    /**
+     * The lower this number is, the less waiting time on the platform is considered, which means that later trips can
+     * beat sooner trips of the same duration (excluding the initial wait time).
+     *  */
     public double waitAtBeginningFactor = 0.4;
 
     /** This prevents unnecessary transfers by adding a cost for boarding a vehicle. */
+    // SH Change
     public int walkBoardCost = 60 * 10;
 
     /** Separate cost for boarding a vehicle with a bicycle, which is more difficult than on foot. */
@@ -301,7 +312,8 @@ public class RoutingRequest implements Cloneable, Serializable {
 
     public int alightSlack = 0;
 
-    public int maxTransfers = 2;
+    // change SH
+    public int maxTransfers = 4;
 
     /**
      * Extensions to the trip planner will require additional traversal options beyond the default 
@@ -857,6 +869,11 @@ public class RoutingRequest implements Cloneable, Serializable {
             whiteListedAgencies = new HashSet<>();
             Collections.addAll(whiteListedAgencies, s.split(","));
         }
+    }
+
+    public void setBikeNetworks(String s) {
+        if (s != null && !s.equals(""))
+            bikeNetworks = new HashSet<>(Arrays.asList(s.split(",")));
     }
 
     public final static int MIN_SIMILARITY = 1000;

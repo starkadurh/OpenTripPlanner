@@ -7,6 +7,7 @@ import org.opentripplanner.model.FeedScopedId;
 import org.opentripplanner.model.Stop;
 import org.opentripplanner.model.Trip;
 import org.opentripplanner.routing.algorithm.NegativeWeightException;
+import org.opentripplanner.routing.bike_rental.BikeRentalStationService;
 import org.opentripplanner.routing.edgetype.*;
 import org.opentripplanner.routing.graph.Edge;
 import org.opentripplanner.routing.graph.Vertex;
@@ -105,6 +106,7 @@ public class State implements Cloneable {
         this.stateData.opt = options;
         this.stateData.startTime = startTime;
         this.stateData.usingRentedBike = false;
+        this.stateData.isFloatingBike = false;
         /* If the itinerary is to begin with a car that is left for transit, the initial state of arriveBy searches is
            with the car already "parked" and in WALK mode. Otherwise, we are in CAR mode and "unparked". */
         if (options.parkAndRide || options.kissAndRide) {
@@ -251,7 +253,59 @@ public class State implements Cloneable {
     public boolean isBikeRenting() {
         return stateData.usingRentedBike;
     }
-    
+
+    /**
+     * Whether or not the bike is dockless.
+     */
+    public boolean isFloatingBike() {
+        return stateData.isFloatingBike;
+    }
+
+    /**
+     * Returns the last street edge traversed by scanning the backEdge of the state chain backward.
+     * @param state a State
+     */
+    private StreetEdge getLastSeenStreetEdge(State state) {
+        if (state == null) {
+            return null;
+        }
+        if (state.backEdge instanceof StreetEdge) {
+            return (StreetEdge) state.backEdge;
+        }
+        return getLastSeenStreetEdge(state.backState);
+    }
+
+    /**
+     * Returns true if:
+     *    - There is no region defined for at least one of the currently taken bikes,
+     *      or
+     *    - The backEdge is inside the rental bike service area (backEdge.networks contains at least one of the
+     *      currently taken bikes)
+     */
+    public boolean isFloatingBikeDropOffAllowed() {
+        if (stateData.currentlyRentedBikes == null) {
+            LOG.warn("'isFloatingBikeDropOffAllowed()' is called while 'currentlyRentedBikes' is null.");
+            return false;
+        }
+
+        // Find which street edge is the one we are at
+        StreetEdge theEdge = getLastSeenStreetEdge(this);
+        if (theEdge == null) {
+            LOG.warn("isFloatingBikeDropOffAllowed(): Could not find the last seen StreetEdge.");
+            return false;
+        }
+
+        BikeRentalStationService bikeService = getContext().graph.getService(BikeRentalStationService.class);
+        for (String network : stateData.currentlyRentedBikes) {
+            boolean hasRegionDefined = bikeService.getBikeRentalRegions().get(network) != null;
+            if (!hasRegionDefined || theEdge.containsBikeNetwork(network)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+
     public boolean isCarParked() {
         return stateData.carParked;
     }
@@ -267,15 +321,13 @@ public class State implements Cloneable {
         // When drive-to-transit is enabled, we need to check whether the car has been parked (or whether it has been picked up in reverse).
         boolean parkAndRide = stateData.opt.parkAndRide || stateData.opt.kissAndRide;
         boolean bikeParkAndRide = stateData.opt.bikeParkAndRide;
-        boolean bikeRentingOk = false;
+        boolean bikeRentingOk = !isBikeRenting() || (isFloatingBike() && isFloatingBikeDropOffAllowed());
         boolean bikeParkAndRideOk = false;
         boolean carParkAndRideOk = false;
         if (stateData.opt.arriveBy) {
-            bikeRentingOk = !isBikeRenting();
             bikeParkAndRideOk = !bikeParkAndRide || !isBikeParked();
             carParkAndRideOk = !parkAndRide || !isCarParked();
         } else {
-            bikeRentingOk = !isBikeRenting();
             bikeParkAndRideOk = !bikeParkAndRide || isBikeParked();
             carParkAndRideOk = !parkAndRide || isCarParked();
         }
@@ -473,6 +525,7 @@ public class State implements Cloneable {
         newState.stateData.initialWaitTime = stateData.initialWaitTime;
         // TODO Check if those two lines are needed:
         newState.stateData.usingRentedBike = stateData.usingRentedBike;
+        newState.stateData.isFloatingBike = stateData.isFloatingBike;
         newState.stateData.carParked = stateData.carParked;
         newState.stateData.bikeParked = stateData.bikeParked;
         return newState;
@@ -633,8 +686,8 @@ public class State implements Cloneable {
         return stateData.serviceDay;
     }
 
-    public Set<String> getBikeRentalNetworks() {
-        return stateData.bikeRentalNetworks;
+    public Set<String> getCurrentlyRentedBikes() {
+        return stateData.currentlyRentedBikes;
     }
 
     /**
@@ -718,8 +771,8 @@ public class State implements Cloneable {
 
                 if (orig.isBikeRenting() && !orig.getBackState().isBikeRenting()) {
                     editor.doneVehicleRenting();
-                } else if (!orig.isBikeRenting() && orig.getBackState().isBikeRenting()) {
-                    editor.beginVehicleRenting(((BikeRentalStationVertex)orig.vertex).getVehicleMode());
+                } else if (!orig.isBikeRenting() && orig.getBackState().isBikeRenting() && orig.vertex instanceof BikeRentalStationVertex) {
+                    editor.beginVehicleRenting(((BikeRentalStationVertex)orig.vertex).getVehicleMode(), orig.getBackState().isFloatingBike());
                 }
                 if (orig.isCarParked() != orig.getBackState().isCarParked())
                     editor.setCarParked(!orig.isCarParked());

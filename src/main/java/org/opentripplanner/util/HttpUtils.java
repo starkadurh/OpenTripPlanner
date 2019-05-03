@@ -3,6 +3,7 @@ package org.opentripplanner.util;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.http.HttpEntity;
@@ -28,6 +29,24 @@ public class HttpUtils {
         HttpGet httpget = new HttpGet(url);
         if (requestHeaderValue != null) {
             httpget.addHeader(requestHeaderName, requestHeaderValue);
+        }
+        HttpClient httpclient = getClient();
+        HttpResponse response = httpclient.execute(httpget);
+        if(response.getStatusLine().getStatusCode() != 200)
+            return null;
+
+        HttpEntity entity = response.getEntity();
+        if (entity == null) {
+            return null;
+        }
+        return entity.getContent();
+    }
+
+    public static InputStream getData(String url, Map<String, String> requestHeaders) throws ClientProtocolException, IOException {
+        HttpGet httpget = new HttpGet(url);
+
+        for(Map.Entry<String, String> header : requestHeaders.entrySet()){
+            httpget.addHeader(header.getKey(), header.getValue());
         }
         HttpClient httpclient = getClient();
         HttpResponse response = httpclient.execute(httpget);

@@ -534,7 +534,6 @@ class EDCNamespaceContext implements NamespaceContext {
         } else {
             return "http://edc/usgs/gov/xsd";
         }
-
     }
 
     public String getPrefix(String namespace) {
@@ -545,9 +544,11 @@ class EDCNamespaceContext implements NamespaceContext {
         }
     }
 
-    public Iterator<?> getPrefixes(String namespace) {
-        return null;
-    }
+//    public Iterator<?> getPrefixes(String namespace) {
+//        return null;
+//    }
+
+    public Iterator<String> getPrefixes(String namespace) { return null; }
 }
 
 class NotAZipFileException extends RuntimeException {

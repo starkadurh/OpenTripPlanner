@@ -1,8 +1,7 @@
 package org.opentripplanner.updater.stoptime;
 
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -34,6 +33,8 @@ public class GtfsRealtimeHttpTripUpdateSource implements TripUpdateSource, JsonC
 
     private String url;
 
+    private HashMap<String,String> headers;
+
     @Override
     public void configure(Graph graph, JsonNode config) throws Exception {
         String url = config.path("url").asText();
@@ -42,6 +43,15 @@ public class GtfsRealtimeHttpTripUpdateSource implements TripUpdateSource, JsonC
         }
         this.url = url;
         this.feedId = config.path("feedId").asText();
+
+        if(config.has("headers")) {
+            this.headers = new HashMap<>();
+            Iterator<HashMap.Entry<String, JsonNode>> headers = config.path("headers").fields();
+            while(headers.hasNext()){
+                Map.Entry<String, JsonNode> header = headers.next();
+                this.headers.put(header.getKey(),header.getValue().asText());
+            }
+        }
     }
 
     @Override
@@ -51,7 +61,7 @@ public class GtfsRealtimeHttpTripUpdateSource implements TripUpdateSource, JsonC
         List<TripUpdate> updates = null;
         fullDataset = true;
         try {
-            InputStream is = HttpUtils.getData(url);
+            InputStream is = HttpUtils.getData(url, this.headers);
             if (is != null) {
                 // Decode message
                 feedMessage = FeedMessage.PARSER.parseFrom(is);

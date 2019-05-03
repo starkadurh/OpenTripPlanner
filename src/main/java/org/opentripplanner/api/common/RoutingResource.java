@@ -230,6 +230,11 @@ public abstract class RoutingResource {
     @QueryParam("bannedAgencies")
     protected String bannedAgencies;
 
+    /** The comma-separated list of requested bike networks. If null, all bike networks will be taken into account.
+     * If empty, all bike networks will be ignored. */
+    @QueryParam("bikeNetworks")
+    protected String bikeNetworks;
+
     /**
      * Functions the same as banned agencies, except only the listed agencies are allowed.
      */
@@ -545,6 +550,9 @@ public abstract class RoutingResource {
 
         if (bannedAgencies != null)
             request.setBannedAgencies(bannedAgencies);
+
+        if (bikeNetworks != null)
+            request.setBikeNetworks(bikeNetworks);
 
         if (whiteListedAgencies != null)
             request.setWhiteListedAgencies(whiteListedAgencies);

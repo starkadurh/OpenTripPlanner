@@ -179,7 +179,9 @@ public class GeometryUtils {
         Coordinate[] coords = new Coordinate[path.size()];
         int i = 0;
         for (LngLatAlt p : path) {
-            coords[i++] = new Coordinate(p.getLatitude(), p.getLongitude());
+            // SH why swich?
+//            coords[i++] = new Coordinate(p.getLatitude(), p.getLongitude());
+            coords[i++] = new Coordinate(p.getLongitude(), p.getLatitude());
         }
         return coords;
     }
