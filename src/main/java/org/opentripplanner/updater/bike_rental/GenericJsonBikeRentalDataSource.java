@@ -6,8 +6,8 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.databind.node.JsonNodeType;
 import org.opentripplanner.updater.JsonConfigurable;
-import org.opentripplanner.routing.bike_rental.BikeRentalStation;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.util.HttpUtils;
 import org.slf4j.Logger;
@@ -23,7 +23,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  *
  * @see BikeRentalDataSource
  */
-public abstract class GenericJsonBikeRentalDataSource implements BikeRentalDataSource, JsonConfigurable {
+public abstract class GenericJsonBikeRentalDataSource<T> implements JsonConfigurable {
 
     private static final Logger log = LoggerFactory.getLogger(GenericJsonBikeRentalDataSource.class);
     private String url;
@@ -32,7 +32,11 @@ public abstract class GenericJsonBikeRentalDataSource implements BikeRentalDataS
 
     private String jsonParsePath;
 
-    List<BikeRentalStation> stations = new ArrayList<BikeRentalStation>();
+    public List<T> getItems() {
+        return items;
+    }
+
+    List<T> items = new ArrayList<>();
 
     /**
      * Construct superclass
@@ -60,15 +64,6 @@ public abstract class GenericJsonBikeRentalDataSource implements BikeRentalDataS
         this.headerValue = headerValue;
     }
 
-    /**
-     * Construct superclass where rental list is on the top level of JSON code
-     *
-     */
-    public GenericJsonBikeRentalDataSource() {
-        jsonParsePath = "";
-    }
-
-    @Override
     public boolean update() {
         try {
             InputStream data = null;
@@ -104,7 +99,7 @@ public abstract class GenericJsonBikeRentalDataSource implements BikeRentalDataS
 
     private void parseJSON(InputStream dataStream) throws IllegalArgumentException, IOException {
 
-        ArrayList<BikeRentalStation> out = new ArrayList<>();
+        ArrayList<T> out = new ArrayList<>();
 
         String rentalString = convertStreamToString(dataStream);
 
@@ -123,18 +118,22 @@ public abstract class GenericJsonBikeRentalDataSource implements BikeRentalDataS
               }
         }
 
-        for (int i = 0; i < rootNode.size(); i++) {
-            // TODO can we use foreach? for (JsonNode node : rootNode) ...
-            JsonNode node = rootNode.get(i);
-            if (node == null) {
-                continue;
+        if (rootNode.getNodeType() == JsonNodeType.ARRAY) {
+            for (JsonNode node: rootNode) {
+                if (node == null) {
+                    continue;
+                }
+                T item = makeItem(node);
+                if (item != null)
+                    out.add(item);
             }
-            BikeRentalStation brstation = makeStation(node);
-            if (brstation != null)
-                out.add(brstation);
+        } else { // Not an array, assume it's one Item.
+            T item = makeItem(rootNode);
+            if (item != null)
+                out.add(item);
         }
         synchronized(this) {
-            stations = out;
+            items = out;
         }
     }
 
@@ -156,11 +155,6 @@ public abstract class GenericJsonBikeRentalDataSource implements BikeRentalDataS
         
     }
 
-    @Override
-    public synchronized List<BikeRentalStation> getStations() {
-        return stations;
-    }
-
     public String getUrl() {
         return url;
     }
@@ -169,7 +163,7 @@ public abstract class GenericJsonBikeRentalDataSource implements BikeRentalDataS
     	this.url = url;
     }
 
-    public abstract BikeRentalStation makeStation(JsonNode rentalStationNode);
+    public abstract T makeItem(JsonNode jsonNode);
 
     @Override
     public String toString() {

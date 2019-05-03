@@ -13,7 +13,7 @@ import com.fasterxml.jackson.databind.JsonNode;
  *
  * @see GenericJsonBikeRentalDataSource
  */
-public class BCycleBikeRentalDataSource extends GenericJsonBikeRentalDataSource {
+public class BCycleBikeRentalDataSource extends GenericJsonBikeStationDataSource {
 
     private String networkName;
 

@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.prefs.Preferences;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import org.opentripplanner.routing.bike_rental.BikeRentalRegion;
 import org.opentripplanner.routing.bike_rental.BikeRentalStation;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.updater.JsonConfigurable;
@@ -25,16 +26,13 @@ public abstract class GenericXmlBikeRentalDataSource implements BikeRentalDataSo
 
 
     public GenericXmlBikeRentalDataSource(String path) {
-        xmlDownloader = new XmlDataListDownloader<BikeRentalStation>();
+        xmlDownloader = new XmlDataListDownloader<>();
         xmlDownloader.setPath(path);
-        xmlDownloader.setDataFactory(new XmlDataListDownloader.XmlDataFactory<BikeRentalStation>() {
-            @Override
-            public BikeRentalStation build(Map<String, String> attributes) {
+        xmlDownloader.setDataFactory(attributes -> {
                 /* TODO Do not make this class abstract, but instead make the client
                  * provide itself the factory?
                  */
                 return makeStation(attributes);
-            }
         });
     }
 
@@ -54,6 +52,11 @@ public abstract class GenericXmlBikeRentalDataSource implements BikeRentalDataSo
     @Override
     public synchronized List<BikeRentalStation> getStations() {
         return stations;
+    }
+
+    @Override
+    public synchronized List<BikeRentalRegion> getRegions() {
+        return new ArrayList<>();
     }
 
     public void setReadAttributes(boolean readAttributes) {

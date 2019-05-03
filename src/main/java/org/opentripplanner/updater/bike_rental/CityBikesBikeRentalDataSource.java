@@ -7,6 +7,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.prefs.Preferences;
 
@@ -15,6 +16,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import org.opentripplanner.routing.bike_rental.BikeRentalRegion;
 import org.opentripplanner.updater.JsonConfigurable;
 import org.opentripplanner.routing.bike_rental.BikeRentalStation;
 import org.opentripplanner.routing.graph.Graph;
@@ -97,6 +99,11 @@ public class CityBikesBikeRentalDataSource implements BikeRentalDataSource, Json
     @Override
     public synchronized List<BikeRentalStation> getStations() {
         return stations;
+    }
+
+    @Override
+    public List<BikeRentalRegion> getRegions() {
+        return new LinkedList<>();
     }
 
     public String getUrl() {

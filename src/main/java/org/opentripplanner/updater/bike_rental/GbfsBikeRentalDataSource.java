@@ -2,6 +2,7 @@ package org.opentripplanner.updater.bike_rental;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.Sets;
+import org.opentripplanner.routing.bike_rental.BikeRentalRegion;
 import org.opentripplanner.routing.bike_rental.BikeRentalStation;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.updater.JsonConfigurable;
@@ -74,6 +75,8 @@ public class GbfsBikeRentalDataSource implements BikeRentalDataSource, JsonConfi
             BikeRentalStation status = statusLookup.get(station.id);
             station.bikesAvailable = status.bikesAvailable;
             station.spacesAvailable = status.spacesAvailable;
+            station.allowDropoff = status.allowDropoff;
+            station.allowPickup = status.allowPickup;
         }
 
         // Copy the full list of station objects (with status updates) into a List, appending the floating bike stations.
@@ -85,6 +88,11 @@ public class GbfsBikeRentalDataSource implements BikeRentalDataSource, JsonConfi
         for (BikeRentalStation station : stations) station.networks = networkIdSet;
 
         return stations;
+    }
+
+    @Override
+    public List<BikeRentalRegion> getRegions() {
+        return new ArrayList<>();
     }
 
     /**
@@ -105,7 +113,7 @@ public class GbfsBikeRentalDataSource implements BikeRentalDataSource, JsonConfi
         }
     }
 
-    class GbfsStationDataSource extends GenericJsonBikeRentalDataSource {
+    class GbfsStationDataSource extends GenericJsonBikeStationDataSource {
 
         public GbfsStationDataSource () {
             super("data/stations");
@@ -114,7 +122,7 @@ public class GbfsBikeRentalDataSource implements BikeRentalDataSource, JsonConfi
         @Override
         public BikeRentalStation makeStation(JsonNode stationNode) {
             BikeRentalStation brstation = new BikeRentalStation();
-            brstation.id = stationNode.path("station_id").toString();
+            brstation.id = stationNode.path("station_id").asText();
             brstation.x = stationNode.path("lon").asDouble();
             brstation.y = stationNode.path("lat").asDouble();
             brstation.name =  new NonLocalizedString(stationNode.path("name").asText());
@@ -123,7 +131,7 @@ public class GbfsBikeRentalDataSource implements BikeRentalDataSource, JsonConfi
         }
     }
 
-    class GbfsStationStatusDataSource extends GenericJsonBikeRentalDataSource {
+    class GbfsStationStatusDataSource extends GenericJsonBikeStationDataSource {
 
         public GbfsStationStatusDataSource () {
             super("data/stations");
@@ -136,11 +144,13 @@ public class GbfsBikeRentalDataSource implements BikeRentalDataSource, JsonConfi
             brstation.bikesAvailable = stationNode.path("num_bikes_available").asInt();
             brstation.spacesAvailable = stationNode.path("num_docks_available").asInt();
             brstation.isCarStation = routeAsCar;
+            JsonNode isRenting = stationNode.path("is_renting");
+            brstation.allowPickup = isRenting == null || isRenting.asBoolean();
             return brstation;
         }
     }
 
-    class GbfsFloatingBikeDataSource extends GenericJsonBikeRentalDataSource {
+    class GbfsFloatingBikeDataSource extends GenericJsonBikeStationDataSource {
 
         public GbfsFloatingBikeDataSource () {
             super("data/bikes");
@@ -149,7 +159,7 @@ public class GbfsBikeRentalDataSource implements BikeRentalDataSource, JsonConfi
         @Override
         public BikeRentalStation makeStation(JsonNode stationNode) {
             BikeRentalStation brstation = new BikeRentalStation();
-            brstation.id = stationNode.path("bike_id").toString();
+            brstation.id = stationNode.path("bike_id").asText();
             brstation.name = new NonLocalizedString(stationNode.path("name").asText());
             brstation.x = stationNode.path("lon").asDouble();
             brstation.y = stationNode.path("lat").asDouble();

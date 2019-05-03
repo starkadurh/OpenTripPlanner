@@ -16,6 +16,7 @@ package org.opentripplanner.updater.bike_rental;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.opentripplanner.routing.bike_rental.BikeRentalRegion;
 import org.opentripplanner.routing.bike_rental.BikeRentalStation;
 import org.opentripplanner.routing.graph.Graph;
 import org.opentripplanner.updater.JsonConfigurable;
@@ -28,6 +29,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -84,6 +86,7 @@ public class BicimadBikeRentalDataSource implements BikeRentalDataSource, JsonCo
                 }
                 return true;
         }
+
 
         private void parseJSON(InputStream dataStream)
                 throws IllegalArgumentException, IOException {
@@ -145,6 +148,11 @@ public class BicimadBikeRentalDataSource implements BikeRentalDataSource, JsonCo
 
         @Override public synchronized List<BikeRentalStation> getStations() {
                 return stations;
+        }
+
+        @Override
+        public List<BikeRentalRegion> getRegions() {
+                return new LinkedList<>();
         }
 
         public String getUrl() {

@@ -24,7 +24,7 @@ import com.fasterxml.jackson.databind.JsonNode;
  * Implementation of a BikeRentalDataSource for the Smoove GIR SabiWeb used in Helsinki.
  * @see BikeRentalDataSource
  */
-public class SmooveBikeRentalDataSource extends GenericJsonBikeRentalDataSource {
+public class SmooveBikeRentalDataSource extends GenericJsonBikeStationDataSource {
 
     private static final Logger log = LoggerFactory.getLogger(SmooveBikeRentalDataSource.class);
 

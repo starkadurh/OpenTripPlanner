@@ -13,7 +13,7 @@ import com.fasterxml.jackson.databind.JsonNode;
  *
  * @see GenericJsonBikeRentalDataSource
  */
-public class CitiBikeNycBikeRentalDataSource extends GenericJsonBikeRentalDataSource {
+public class CitiBikeNycBikeRentalDataSource extends GenericJsonBikeStationDataSource {
 
     private String networkName;
 
@@ -38,7 +38,7 @@ public class CitiBikeNycBikeRentalDataSource extends GenericJsonBikeRentalDataSo
 
         BikeRentalStation brstation = new BikeRentalStation();
 
-        brstation.networks = new HashSet<String>();
+        brstation.networks = new HashSet<>();
         brstation.networks.add(this.networkName);
 
         brstation.id = stationNode.path("id").toString();
